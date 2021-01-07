@@ -15,6 +15,7 @@ const connection = mysql.createConnection({
 
 let departmentList = [];
 let roleList = [];
+let empList = [];
 
 connection.connect((err) => {
     if (err) throw err;
@@ -34,6 +35,7 @@ function searchDatabase () {
             'Add role',
             'View all employees',
             'Add employee',
+            'Update role',
             'exit'
         ]
     }).then((answer) => {
@@ -62,6 +64,10 @@ function searchDatabase () {
                 addEmployee();
             break;
 
+            case 'Update role':
+                updateRole();
+            break;
+
             case 'exit':
                 connection.end();
                 break;
@@ -77,7 +83,7 @@ function searchDatabase () {
 // ============================== DISPLAYING FUNCTIONS ==================================
 
 function displayDepartments () {
-    connection.query("SELECT * FROM employees_db.department", function (error, results) {
+    connection.query(`SELECT * FROM employees_db.department`, function (error, results) {
         if (error) throw error;
         console.table("results", results);
         searchDatabase();
@@ -85,7 +91,7 @@ function displayDepartments () {
 }
 
 function displayRoles () {
-    connection.query("SELECT * FROM employees_db.role", function (error, results) {
+    connection.query(`SELECT * FROM employees_db.role`, function (error, results) {
         if (error) throw error;
         console.table("results", results);
         searchDatabase();
@@ -102,7 +108,6 @@ function displayEmployees () {
         console.table("results", results);
         searchDatabase();
     })
-    
 }
 
 
@@ -158,6 +163,7 @@ function addRole () {
         ]).then((answers) => {
             let deptId;
             for (let i = 0; i < results.length; i++) {
+                //iterate through table results
                 if (answers.deptname == results[i].name) {
                     deptId = results[i].id;
                     //grabbing the id associated with the department
@@ -219,12 +225,13 @@ function addEmployee () {
 
 function departmentInsert (name, id) {
     console.log("adding.....", name);
-    connection.query("INSERT INTO employees_db.department SET ?", {
+    connection.query(`INSERT INTO employees_db.department SET ?`, {
         id:id,
         name:name
     }, (error) => {
         if(error) throw error;
         console.log("added department", " ", name);
+        displayDepartments();
     })
     
     searchDatabase();
@@ -232,7 +239,7 @@ function departmentInsert (name, id) {
 
 function roleInsert (id, title, salary, deptId) {
     console.log("adding.....", title);
-    connection.query("INSERT INTO employees_db.role SET ?", {
+    connection.query(`INSERT INTO employees_db.role SET ?`, {
         id:id,
         title:title,
         salary:salary,
@@ -240,13 +247,14 @@ function roleInsert (id, title, salary, deptId) {
     }, (error) => {
         if(error) throw error;
         console.log("added role", " ", title);
+        displayRoles();
     })
     searchDatabase();
 }
 
 function employeeInsert(id, firstname, lastname, roleId) {
     console.log(firstname, " ", lastname)
-    connection.query("INSERT INTO employees_db.employee SET ?", {
+    connection.query(`INSERT INTO employees_db.employee SET ?`, {
         id: id,
         first_name:firstname,
         last_name:lastname,
@@ -257,4 +265,67 @@ function employeeInsert(id, firstname, lastname, roleId) {
         displayEmployees();
     })
     searchDatabase();
+}
+
+//===============================UPDATING ============================
+
+function updateRole () {
+
+    connection.query(`SELECT id, first_name, last_name FROM employee`,
+    (error, empResults) => {
+        if (error) throw error;
+        for (let i = 0; i < empResults.length; i++) {
+            empList.push(empResults[i].first_name + " " + empResults[i].last_name)
+        }
+        connection.query(`SELECT id, title FROM role`,
+            (error, roleResults) => {
+                if (error) throw error;
+                    for (let i = 0; i < roleResults.length; i++) {
+                    roleList.push(roleResults[i].title);
+                    }
+                    inquirer.prompt([
+                        {
+                            type : "list",
+                            name: "empName",
+                            message: "Which employee are you updating?",
+                            choices : empList
+                        },
+                        {
+                            type:'list',
+                            name: 'empRole',
+                            message: "Which role do they have now?",
+                            choices : roleList
+                        }
+                    ]).then((answers) => {
+                        console.log(answers.empName, " ", answers.empRole)
+                        let newRoleId;
+                        for (let i = 0; i < roleResults.length; i++) {
+                            if (answers.empRole == roleResults[i].title) {
+                                newRoleId = roleResults[i].id
+                            }
+                            
+                        }
+                        let empId;
+                        for (let i = 0; i < empResults.length; i++) {
+                            if (empResults[i].first_name + " " + empResults[i].last_name == answers.empName) {
+                                empId = empResults[i].id;
+                            }
+                            
+                        }
+                        connection.query(`UPDATE employee 
+                                          SET role_id = ? 
+                                          WHERE id = ?`, 
+                        [newRoleId, empId]
+                        ,
+                        function (error, result) {
+                            if (error) throw error;
+                            console.log("updated ", answers.empName, "with new role ", answers.empRole)
+                            displayEmployees();
+                        })
+                        searchDatabase();
+                        
+                        
+            })
+        }) 
+    })
 }
