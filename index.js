@@ -83,7 +83,7 @@ function searchDatabase () {
 // ============================== DISPLAYING FUNCTIONS ==================================
 
 function displayDepartments () {
-    connection.query(`SELECT * FROM employees_db.department`, function (error, results) {
+    connection.query(`SELECT * FROM department`, function (error, results) {
         if (error) throw error;
         console.table("results", results);
         searchDatabase();
@@ -91,7 +91,8 @@ function displayDepartments () {
 }
 
 function displayRoles () {
-    connection.query(`SELECT * FROM employees_db.role`, function (error, results) {
+    connection.query(`SELECT * FROM role
+                     LEFT JOIN department on role.department_id = department.id`, function (error, results) {
         if (error) throw error;
         console.table("results", results);
         searchDatabase();
@@ -231,6 +232,7 @@ function departmentInsert (name, id) {
     }, (error) => {
         if(error) throw error;
         console.log("added department", " ", name);
+        console.clear();
         displayDepartments();
     })
     
@@ -247,6 +249,7 @@ function roleInsert (id, title, salary, deptId) {
     }, (error) => {
         if(error) throw error;
         console.log("added role", " ", title);
+        console.clear();
         displayRoles();
     })
     searchDatabase();
@@ -262,6 +265,7 @@ function employeeInsert(id, firstname, lastname, roleId) {
     }, function (error) {
         if (error) throw error;
         console.log("added employee", firstname, " ", lastname);
+        console.clear();
         displayEmployees();
     })
     searchDatabase();
