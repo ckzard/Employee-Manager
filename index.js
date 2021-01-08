@@ -336,9 +336,7 @@ function updateRole () {
                             console.log("updated ", answers.empName, "with new role ", answers.empRole)
                             displayEmployees();
                         })
-                        searchDatabase();
-                        
-                        
+                        searchDatabase();   
             })
         }) 
     })
@@ -357,6 +355,7 @@ function deleteItem () {
             connection.query(`SELECT * FROM department`,
             function (error, results) {
                 if (error) throw error;
+                console.clear()
                 inquirer.prompt([
                     {
                         type: "list",
@@ -385,7 +384,7 @@ function deleteItem () {
                 for (let i = 0; i < results.length; i++) {
                     roleList.push(results[i].title)
                 }
-                console.log(roleList)
+                console.clear()
                 inquirer.prompt([
                     {
                         type: 'list',
@@ -412,6 +411,7 @@ function deleteItem () {
                 for (let i = 0; i < results.length; i++) {
                     empList.push(results[i].first_name + " " + results[i].last_name)
                 }
+                console.clear()
                 inquirer.prompt([
                     {
                         type: 'list',
@@ -431,6 +431,7 @@ function deleteItem () {
                 })
             })
         }
-
+        console.clear();
+        searchDatabase();
     })
 }
