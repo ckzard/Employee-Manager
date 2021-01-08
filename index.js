@@ -1,9 +1,7 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
-const chalk = require('chalk');
-const ConsoleTable = require('console.table');
 const password = require('./password')
-const fs = require('fs');
+
 
 // prevent same id being used again, integrate managers (update and view by manager), deleting 
 
