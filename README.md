@@ -1,4 +1,4 @@
-# Employee Tracker
+# Employee Manager
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This is a content management system that allows you to manage MySQL databases using a CLI, in my case the database contains employee information.
