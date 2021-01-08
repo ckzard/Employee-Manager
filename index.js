@@ -5,6 +5,8 @@ const ConsoleTable = require('console.table');
 const password = require('./password')
 const fs = require('fs');
 
+// prevent same id being used again, integrate managers (update and view by manager), deleting 
+
 const connection = mysql.createConnection({
     host: 'localhost',
     port: 3306,
@@ -36,6 +38,7 @@ function searchDatabase () {
             'View all employees',
             'Add employee',
             'Update role',
+            'Delete item',
             'exit'
         ]
     }).then((answer) => {
@@ -68,6 +71,10 @@ function searchDatabase () {
                 updateRole();
             break;
 
+            case 'Delete item':
+                deleteItem();
+            break;
+
             case 'exit':
                 connection.end();
                 break;
@@ -85,7 +92,8 @@ function searchDatabase () {
 function displayDepartments () {
     connection.query(`SELECT * FROM department`, function (error, results) {
         if (error) throw error;
-        console.table("results", results);
+        console.clear();
+        console.table("Departments", results);
         searchDatabase();
     })
 }
@@ -94,19 +102,21 @@ function displayRoles () {
     connection.query(`SELECT * FROM role
                      LEFT JOIN department on role.department_id = department.id`, function (error, results) {
         if (error) throw error;
-        console.table("results", results);
+        console.clear();
+        console.table("Roles", results);
         searchDatabase();
     })
 }
 
 function displayEmployees () {
-    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, title, name AS department, salary
+    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, title, name AS department, salary, manager_id
     FROM employee
     LEFT JOIN role ON employee.role_id = role.id
     LEFT JOIN department on role.department_id = department.id
     `, function (error, results) {
         if (error) throw error;
-        console.table("results", results);
+        console.clear();
+        console.table("Employees", results);
         searchDatabase();
     })
 }
@@ -331,5 +341,96 @@ function updateRole () {
                         
             })
         }) 
+    })
+}
+
+function deleteItem () {
+    inquirer.prompt([
+        {
+            type: "list",
+            name: "item",
+            message: "What do you want to delete?",
+            choices: ["Department", "Role", "Employee"]
+        }
+    ]).then((answer) => {
+        if (answer.item == "Department") {
+            connection.query(`SELECT * FROM department`,
+            function (error, results) {
+                if (error) throw error;
+                inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "department",
+                        message: "What do you want to delete?",
+                        choices: results
+                    }
+                ]).then((answer) => {
+                    console.log(answer.department, "was the one you chose")
+                    let dept = answer.department;
+                    connection.query(`DELETE FROM department WHERE name = ?`, dept,
+                    function (error, result) {
+                        if (error) throw error;
+                        console.log(answer.department, "deleted.....")
+                        displayDepartments();
+                    })
+                    
+                })
+            })
+            
+        }
+        if (answer.item == "Role") {
+            connection.query(`SELECT title from role`, 
+            function (error, results) {
+                if (error) throw error;
+                for (let i = 0; i < results.length; i++) {
+                    roleList.push(results[i].title)
+                }
+                console.log(roleList)
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'roleItem',
+                        message: 'Which role do you want to delete?',
+                        choices: roleList
+                    }
+                ]).then((answer) => {
+                    console.log(answer.roleItem, "was the one you chose")
+                    let roleItem = answer.roleItem;
+                    connection.query(`DELETE FROM role WHERE title = ?`, roleItem,
+                    function (error, result) {
+                        if (error) throw error;
+                        console.log(answer.roleItem, "deleted.....")
+                        displayRoles();
+                    })
+                })
+            })
+        }
+        if (answer.item == "Employee") {
+            connection.query(`SELECT * from employee`, 
+            function (error, results) {
+                if (error) throw error;
+                for (let i = 0; i < results.length; i++) {
+                    empList.push(results[i].first_name + " " + results[i].last_name)
+                }
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'employee',
+                        message: 'Which employee do you want to delete?',
+                        choices: empList
+                    }
+                ]).then((answer) => {
+                    console.log(answer.employee, "was the one you chose")
+                    let empItem = answer.employee;
+                    connection.query(`DELETE FROM employee WHERE CONCAT(first_name, " ", last_name) = ?`, empItem,
+                    function (error, result) {
+                        if (error) throw error;
+                        console.log(answer.employee, "deleted.....")
+                        displayEmployees();
+                    })
+                })
+            })
+        }
+
     })
 }
